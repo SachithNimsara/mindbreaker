@@ -1,27 +1,28 @@
-import { createTheme, ThemeProvider } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
+import React from "react";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import CssBaseline from "@mui/material/CssBaseline";
 
 const theme = createTheme({
   palette: {
-    mode: 'light',
+    mode: "light",
     primary: {
-      main: '#5D5FEF',
+      main: "#5D5FEF",
     },
     secondary: {
-      main: '#EF5DA8',
+      main: "#EF5DA8",
     },
     background: {
-      default: '#F9FAFB',
-      paper: '#FFFFFF',
+      default: "#F9FAFB",
+      paper: "#FFFFFF",
     },
     success: {
-      main: '#4CAF50',
+      main: "#4CAF50",
     },
     warning: {
-      main: '#FF9800',
+      main: "#FF9800",
     },
     error: {
-      main: '#F44336',
+      main: "#F44336",
     },
   },
   typography: {
@@ -34,9 +35,9 @@ const theme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          textTransform: 'none',
+          textTransform: "none",
           borderRadius: 8,
-          padding: '8px 16px',
+          padding: "8px 16px",
         },
       },
     },
@@ -44,7 +45,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 12,
-          boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)',
+          boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.05)",
         },
       },
     },
