@@ -1,4 +1,4 @@
-import React, { useState, createContext, useContext } from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import {
   CssBaseline,
@@ -16,42 +16,25 @@ import {
   ListItemIcon,
   ListItemText,
   Snackbar,
-  Alert
+  Alert,
+  Button
 } from '@mui/material';
 import {
   Menu as MenuIcon,
   Dashboard as DashboardIcon,
   Task as TaskIcon,
   Book as JournalIcon,
-  FreeBreakfast as BreakIcon
+  FreeBreakfast as BreakIcon,
+  Login as LoginIcon
 } from '@mui/icons-material';
 
-// Create Auth Context
-const AuthContext = createContext();
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
-
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  
-  const value = {
-    user,
-    login: (userData) => setUser(userData),
-    logout: () => setUser(null)
-  };
-  
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
+// Import components from correct paths
+import TaskBoard from './components/TaskBoard/TaskBoard';
+import Journal from './components/Journal/Journal';
+import BreakTimer from './components/BreakTimer/BreakTimer';
+import DashboardPage from './pages/DashboardPage';
+import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
 // Create a custom theme
 const theme = createTheme({
@@ -101,11 +84,24 @@ const theme = createTheme({
         },
       },
     },
+    MuiListItem: {
+      styleOverrides: {
+        root: {
+          '&.MuiListItem-button': {
+            '&:hover': {
+              backgroundColor: 'rgba(93, 95, 239, 0.08)',
+            },
+          },
+        },
+      },
+    },
   },
 });
 
 // Navbar Component
-const Navbar = ({ handleDrawerToggle }) => {
+const Navbar = ({ handleDrawerToggle, handleLogin }) => {
+  const { user, logout } = useAuth();
+  
   return (
     <AppBar
       position="fixed"
@@ -125,9 +121,18 @@ const Navbar = ({ handleDrawerToggle }) => {
         >
           <MenuIcon />
         </IconButton>
-        <Typography variant="h6" noWrap component="div">
+        <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
           Productivity App
         </Typography>
+        {user ? (
+          <Button color="inherit" onClick={logout}>
+            Logout
+          </Button>
+        ) : (
+          <Button color="inherit" onClick={handleLogin} startIcon={<LoginIcon />}>
+            Login
+          </Button>
+        )}
       </Toolbar>
     </AppBar>
   );
@@ -136,6 +141,7 @@ const Navbar = ({ handleDrawerToggle }) => {
 // Sidebar Component
 const Sidebar = ({ mobileOpen, handleDrawerToggle }) => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const { user } = useAuth();
   
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
@@ -149,7 +155,17 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }) => {
       <Toolbar />
       <List>
         {menuItems.map((item) => (
-          <ListItem button key={item.text}>
+          <ListItem 
+            button 
+            key={item.text} 
+            component="a" 
+            href={item.path}
+            sx={{
+              '&:hover': {
+                backgroundColor: 'rgba(93, 95, 239, 0.08)',
+              },
+            }}
+          >
             <ListItemIcon>{item.icon}</ListItemIcon>
             <ListItemText primary={item.text} />
           </ListItem>
@@ -157,6 +173,8 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }) => {
       </List>
     </div>
   );
+  
+  if (!user) return null;
   
   return (
     <Box
@@ -183,50 +201,33 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }) => {
   );
 };
 
-// Page Components
-const TasksPage = () => (
-  <Box>
-    <Typography variant="h4" gutterBottom>
-      Tasks
-    </Typography>
-    <Typography>
-      Manage your tasks here.
-    </Typography>
-  </Box>
-);
-
-const JournalPage = () => (
-  <Box>
-    <Typography variant="h4" gutterBottom>
-      Journal
-    </Typography>
-    <Typography>
-      Write your journal entries here.
-    </Typography>
-  </Box>
-);
-
-const BreaksPage = () => (
-  <Box>
-    <Typography variant="h4" gutterBottom>
-      Breaks
-    </Typography>
-    <Typography>
-      Schedule and track your breaks here.
-    </Typography>
-  </Box>
-);
-
-const DashboardPage = () => (
-  <Box>
-    <Typography variant="h4" gutterBottom>
-      Dashboard
-    </Typography>
-    <Typography>
-      View your productivity dashboard here.
-    </Typography>
-  </Box>
-);
+// Login Page Component
+const LoginPage = ({ onLogin }) => {
+  return (
+    <Box 
+      sx={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        height: '100vh',
+        gap: 2
+      }}
+    >
+      <Typography variant="h4" gutterBottom>
+        Welcome to Productivity App
+      </Typography>
+      <Button 
+        variant="contained" 
+        size="large" 
+        onClick={onLogin}
+        startIcon={<LoginIcon />}
+      >
+        Login to Continue
+      </Button>
+    </Box>
+  );
+};
 
 // Custom Snackbar Provider
 const CustomSnackbarProvider = ({ children }) => {
@@ -282,18 +283,28 @@ const CustomSnackbarProvider = ({ children }) => {
 };
 
 // Main App Content
-function AppContent() {
+function AppContent({ addSnackbar }) {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user, login } = useAuth();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
 
+  const handleLogin = () => {
+    login({ name: 'User', email: 'user@example.com' });
+    addSnackbar('Successfully logged in!', 'success');
+  };
+
+  if (!user) {
+    return <LoginPage onLogin={handleLogin} />;
+  }
+
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
-      <Navbar handleDrawerToggle={handleDrawerToggle} />
+      <Navbar handleDrawerToggle={handleDrawerToggle} handleLogin={handleLogin} />
       <Sidebar 
         mobileOpen={mobileOpen} 
         handleDrawerToggle={handleDrawerToggle} 
@@ -308,11 +319,28 @@ function AppContent() {
         }}
       >
         <Routes>
-          <Route path="/tasks" element={<TasksPage />} />
-          <Route path="/journal" element={<JournalPage />} />
-          <Route path="/breaks" element={<BreaksPage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="*" element={<Navigate to="/tasks" replace />} />
+          <Route path="/tasks" element={
+            <ProtectedRoute>
+              <TaskBoard addSnackbar={addSnackbar} />
+            </ProtectedRoute>
+          } />
+          <Route path="/journal" element={
+            <ProtectedRoute>
+              <Journal addSnackbar={addSnackbar} />
+            </ProtectedRoute>
+          } />
+          <Route path="/breaks" element={
+            <ProtectedRoute>
+              <BreakTimer addSnackbar={addSnackbar} />
+            </ProtectedRoute>
+          } />
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <DashboardPage addSnackbar={addSnackbar} />
+            </ProtectedRoute>
+          } />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </Box>
     </Box>
